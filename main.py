@@ -9,10 +9,13 @@ st.set_page_config(page_title="Helsinki Bike Trips", layout="wide")
 @st.cache_data
 def load_data():
     df = pd.read_csv("2021-04.csv")
-    df['Departure'] = pd.to_datetime(df['Departure'], errors='coerce')
+    if 'Departure' in df.columns:
+        df['Departure'] = pd.to_datetime(df['Departure'], errors='coerce')
+    else:
+        df['Departure'] = pd.NaT
     df = df[df['Departure'].notna()]
-    df['Weekday'] = df['Departure'].dt.day_name()
-    df['Hour'] = df['Departure'].dt.hour
+    df['Weekday'] = df['Departure'].apply(lambda x: x.day_name())
+    df['Hour'] = df['Departure'].apply(lambda x: x.hour)
     return df
 
 df = load_data()
