@@ -8,8 +8,9 @@ st.set_page_config(page_title="Helsinki Bike Trips", layout="wide")
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv("2021-04.csv", parse_dates=["Departure"], dayfirst=False)
-    df = df[df['Departure'].notna()]  # remove NaT rows
+    df = pd.read_csv("2021-04.csv")
+    df['Departure'] = pd.to_datetime(df['Departure'], errors='coerce')
+    df = df[df['Departure'].notna()]
     df['Weekday'] = df['Departure'].dt.day_name()
     df['Hour'] = df['Departure'].dt.hour
     return df
@@ -101,7 +102,7 @@ st.subheader("📅 Hourly Trip Breakdown")
 selected_hour = st.slider("Select Hour of Day", min_value=0, max_value=23, value=8)
 hour_data = filtered[filtered['Hour'] == selected_hour]
 
-st.write(filtered[['Departure', 'Hour', 'Weekday']].head())  # debug helper
+st.write(filtered[['Departure', 'Hour', 'Weekday']].head())
 
 if not hour_data.empty:
     chart_data = hour_data.groupby('Weekday').size().reset_index(name='Trips')
