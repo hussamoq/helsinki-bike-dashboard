@@ -8,8 +8,8 @@ st.set_page_config(page_title="Helsinki Bike Trips", layout="wide")
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv("2021-04.csv")
-    df['Departure'] = pd.to_datetime(df['Departure'], errors='coerce')
+    df = pd.read_csv("2021-04.csv", parse_dates=["Departure"], dayfirst=False)
+    df = df[df['Departure'].notna()]  # remove NaT rows
     df['Weekday'] = df['Departure'].dt.day_name()
     df['Hour'] = df['Departure'].dt.hour
     return df
@@ -86,9 +86,10 @@ if dep_station in station_coords and ret_station in station_coords:
                       get_fill_color='[200, 30, 0, 160]',
                       get_radius=80),
             pdk.Layer("LineLayer",
-                      data=map_df,
+                      data=[{"lon": dep_coord[1], "lat": dep_coord[0],
+                             "lon2": ret_coord[1], "lat2": ret_coord[0]}],
                       get_source_position='[lon, lat]',
-                      get_target_position='[lon, lat]',
+                      get_target_position='[lon2, lat2]',
                       get_color='[0, 0, 255, 160]',
                       auto_highlight=True)
         ]
@@ -99,6 +100,8 @@ st.markdown("---")
 st.subheader("📅 Hourly Trip Breakdown")
 selected_hour = st.slider("Select Hour of Day", min_value=0, max_value=23, value=8)
 hour_data = filtered[filtered['Hour'] == selected_hour]
+
+st.write(filtered[['Departure', 'Hour', 'Weekday']].head())  # debug helper
 
 if not hour_data.empty:
     chart_data = hour_data.groupby('Weekday').size().reset_index(name='Trips')
